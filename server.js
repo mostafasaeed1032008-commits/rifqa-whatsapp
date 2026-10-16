@@ -13,10 +13,14 @@
  */
 
 import http from 'http';
+import https from 'https';
+import dns from 'dns';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+
+try { dns.setServers(['8.8.8.8', '1.1.1.1']); } catch(e) {}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,6 +73,14 @@ const PHONE_NUMBER = '201554463293';
 const AUTH_DIR = path.join(__dirname, 'whatsapp_auth_session');
 const SUPABASE_URL = 'https://nifwgokownhyyksgcykk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZndnb2tvd25oeXlrc2djeWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxMDEwNzAsImV4cCI6MjEwNzY3NzA3MH0.9IY6lY4uU85LvkdYZI0RyChH_UIWXGMSvtmS3Ks1cj0';
+
+// Meta WhatsApp Cloud API Official Configuration
+const META_CONFIG = {
+  token: 'EAAaKGm8MFqIBSigeRcmoKAYtXFuhsRBCOaH5xYayQBFaYVrIOmjAbVSayEWAzZAsj92s1B2aNd7NpaNFZCXztU2LwZABkZCHPXOzRqkBcRTk8Is9nl9g1ricC7h35T7ZBl2ZCOZAwtou2gOdTZABC1ZBTOkOB0v10lbd16iPKebXLJIFvJ1DkCEvjNxNWcfhZBsVHqmbwBvV3j3y9qmT31f2YX88rFDgk5r6cZC7ZAuhrG1tgJbMQhCGAkXsxZAC8sApClFy9E0KZAcKxTZCeY74NhruG9MCAZDZD',
+  phoneNumberId: '1349866838214310',
+  wabaId: '1753529392573038',
+  verifyToken: 'rifqa_2026'
+};
 
 // Live Engine State
 let sock = null;
@@ -148,19 +160,29 @@ async function fetchLeadFromSupabase(phone) {
 
 async function upsertLeadToSupabase(leadData) {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?on_conflict=phone`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=representation'
-      },
-      body: JSON.stringify(leadData)
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      console.warn('[Supabase Warning]:', err);
+    const existing = await fetchLeadFromSupabase(leadData.phone);
+    if (existing?.id) {
+      // Update existing lead
+      await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${existing.id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(leadData)
+      });
+    } else {
+      // Insert new lead
+      await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(leadData)
+      });
     }
   } catch (e) {
     console.warn('[Supabase Error]:', e.message);
@@ -273,6 +295,197 @@ async function sendNativeInteractiveReply(socket, jid, replyData) {
     return await socket.sendMessage(jid, { text });
   }
 }
+
+// ==============================================================================
+// 6.1 Meta WhatsApp Cloud API Message Dispatcher (Official Native UI)
+// ==============================================================================
+async function sendMetaCloudMessage(toPhone, replyData) {
+  const { text, header = 'شركة رِفقة للعمرة', footer = 'رِفقة - رفيقكم لبيت الله الحرام', buttons = [] } = replyData;
+
+  let payload;
+  const hasList = buttons.some(b => b.type === 'single_select');
+
+  if (hasList) {
+    const listBtn = buttons.find(b => b.type === 'single_select');
+    payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: toPhone,
+      type: 'interactive',
+      interactive: {
+        type: 'list',
+        header: { type: 'text', text: header },
+        body: { text: text },
+        footer: { text: footer },
+        action: {
+          button: (listBtn.title || 'عرض الخيارات').slice(0, 20),
+          sections: listBtn.sections.map(s => ({
+            title: s.title.slice(0, 24),
+            rows: s.rows.map(r => ({
+              id: (r.id || r.rowId).slice(0, 200),
+              title: r.title.slice(0, 24),
+              description: (r.description || '').slice(0, 72)
+            }))
+          }))
+        }
+      }
+    };
+  } else if (buttons.length > 0) {
+    payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: toPhone,
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        header: { type: 'text', text: header },
+        body: { text: text },
+        footer: { text: footer },
+        action: {
+          buttons: buttons.slice(0, 3).map(b => ({
+            type: 'reply',
+            reply: {
+              id: b.id.slice(0, 256),
+              title: b.displayText.slice(0, 20)
+            }
+          }))
+        }
+      }
+    };
+  } else {
+    payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: toPhone,
+      type: 'text',
+      text: { body: text }
+    };
+  }
+
+  const postData = JSON.stringify(payload);
+  return new Promise((resolve, reject) => {
+    const req = https.request(`https://graph.facebook.com/v21.0/${META_CONFIG.phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${META_CONFIG.token}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, (res) => {
+      let b = '';
+      res.on('data', c => b += c);
+      res.on('end', () => {
+        try { resolve(JSON.parse(b)); } catch(e) { resolve({ raw: b }); }
+      });
+    });
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
+
+// ==============================================================================
+// 6.2 Meta WhatsApp Cloud API Webhook Processor
+// ==============================================================================
+async function handleMetaInbound(payload) {
+  try {
+    const entry = payload?.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const value = changes?.value;
+    const messages = value?.messages;
+
+    if (!messages || messages.length === 0) return;
+
+    for (const m of messages) {
+      const fromPhone = m.from; // e.g. "201223759592"
+      const msgId = m.id;
+
+      if (processedMsgIds.has(msgId)) continue;
+      processedMsgIds.add(msgId);
+
+      const contactName = value?.contacts?.[0]?.profile?.name || `معتمر (${fromPhone.slice(-4)})`;
+      let text = '';
+      let buttonId = null;
+
+      if (m.type === 'text') {
+        text = m.text?.body || '';
+      } else if (m.type === 'interactive') {
+        if (m.interactive?.type === 'button_reply') {
+          buttonId = m.interactive.button_reply.id;
+          text = m.interactive.button_reply.title || buttonId;
+        } else if (m.interactive?.type === 'list_reply') {
+          buttonId = m.interactive.list_reply.id;
+          text = m.interactive.list_reply.title || buttonId;
+        }
+      }
+
+      console.log(`\n[Meta Inbound] From: ${fromPhone} (${contactName}) | Text: "${text}" | ButtonId: "${buttonId}"`);
+
+      // Fetch or initialize lead
+      let lead = await fetchLeadFromSupabase(fromPhone);
+      const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      const existingMessages = Array.isArray(lead?.messages) ? lead.messages : [];
+      existingMessages.push({
+        id: Date.now(),
+        sender: 'user',
+        text: text,
+        time: now
+      });
+
+      // Compute Luxury Umrah Triage Reply
+      const reply = computeTriageReply(text, buttonId, fromPhone, lead);
+      if (reply && autoReplyEnabled) {
+        console.log(`[Meta Outbound Reply] Sending Luxury Umrah reply to ${fromPhone}...`);
+        const sendRes = await sendMetaCloudMessage(fromPhone, reply);
+        console.log(`[Meta Outbound Result]:`, sendRes?.messages ? 'Delivered successfully' : JSON.stringify(sendRes));
+
+        existingMessages.push({
+          id: Date.now() + 1,
+          sender: 'bot',
+          text: reply.text,
+          time: now
+        });
+
+        lead = {
+          id: lead?.id || `lead_${fromPhone}`,
+          name: lead?.name || contactName,
+          phone: fromPhone,
+          stage: reply.stage || lead?.stage || 'new_lead',
+          handled_by: reply.stage === 'needs_human' ? 'agent' : 'bot',
+          pax: reply.pax || lead?.pax || 2,
+          companions: reply.companions || lead?.companions || 'عائلة',
+          priority: reply.priority || lead?.priority || '',
+          recommended_program: reply.program || lead?.recommended_program || 'جاري التحديد',
+          commission: reply.commission || lead?.commission || 0,
+          month: 'شهر ديسمبر 2026',
+          last_activity: 'منذ ثوانٍ',
+          messages: existingMessages
+        };
+      } else {
+        lead = {
+          id: lead?.id || `lead_${fromPhone}`,
+          name: lead?.name || contactName,
+          phone: fromPhone,
+          stage: lead?.stage || 'new_lead',
+          handled_by: lead?.handled_by || 'agent',
+          pax: lead?.pax || 2,
+          companions: lead?.companions || '',
+          priority: lead?.priority || '',
+          recommended_program: lead?.recommended_program || '',
+          commission: lead?.commission || 0,
+          month: lead?.month || 'شهر ديسمبر 2026',
+          last_activity: 'منذ ثوانٍ',
+          messages: existingMessages
+        };
+      }
+
+      await upsertLeadToSupabase(lead);
+    }
+  } catch (err) {
+    console.error('[handleMetaInbound Error]:', err.message);
+  }
+}
+
 
 // ==============================================================================
 // 7. Rifqa Triage Engine (Clean Luxury Copy & Native Menus)
@@ -646,6 +859,46 @@ const server = http.createServer(async (req, res) => {
       timestamp: new Date().toISOString()
     }));
   }
+
+  // Meta Cloud API Webhook Verification (GET /webhook)
+  if (url.pathname === '/webhook' && req.method === 'GET') {
+    const mode = url.searchParams.get('hub.mode');
+    const token = url.searchParams.get('hub.verify_token');
+    const challenge = url.searchParams.get('hub.challenge');
+
+    if (mode === 'subscribe' && token === META_CONFIG.verifyToken) {
+      console.log(`[Meta Webhook] Successfully verified by Meta! Echoing challenge: ${challenge}`);
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      return res.end(challenge);
+    } else {
+      console.warn(`[Meta Webhook] Verification failed! Expected: "${META_CONFIG.verifyToken}", Received: "${token}"`);
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      return res.end('Verification token mismatch');
+    }
+  }
+
+  // Meta Cloud API Webhook Event Receiver (POST /webhook)
+  if (url.pathname === '/webhook' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        // Meta requires immediate 200 OK
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'EVENT_RECEIVED' }));
+
+        // Process message in background
+        await handleMetaInbound(payload);
+      } catch (err) {
+        console.error('[Meta Webhook POST Error]:', err.message);
+        res.writeHead(200);
+        res.end();
+      }
+    });
+    return;
+  }
+
 
   // Engine Status & Live Auth Tokens
   if (url.pathname === '/status' && req.method === 'GET') {
