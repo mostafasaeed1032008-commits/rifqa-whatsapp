@@ -572,7 +572,12 @@
     const SUPABASE_URL = 'https://nifwgokownhyyksgcykk.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZndnb2tvd25oeXlrc2djeWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxMDEwNzAsImV4cCI6MjEwNzY3NzA3MH0.9IY6lY4uU85LvkdYZI0RyChH_UIWXGMSvtmS3Ks1cj0';
 
-    let WA_SERVICE_URL = localStorage.getItem('rifqa_wa_service_url') || 'http://192.168.1.13:3005';
+    let WA_SERVICE_URL = 'http://localhost:3005';
+    const savedUrl = localStorage.getItem('rifqa_wa_service_url');
+    if (savedUrl && !savedUrl.includes('192.168.1.13')) {
+      WA_SERVICE_URL = savedUrl;
+    }
+
     let supabaseClient = null;
 
     let crmData = {
