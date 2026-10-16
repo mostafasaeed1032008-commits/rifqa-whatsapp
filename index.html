@@ -448,7 +448,16 @@
       <div class="modal-body" style="text-align:center;">
         
         <div id="waStatusBanner" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#1e40af;">
-          <strong>🎯 الربط الفوري:</strong> امسح الباركود بكاميرا واتساب على هاتفك لتشغيل الرد الآلي والمزامنة اللحظية مع CRM.
+          <strong>🎯 الربط الفوري:</strong> اختر الربط برمز الأرقام (بدون كاميرا) أو امسح الباركود لتشغيل الرد الآلي فوراً.
+        </div>
+
+        <!-- Pairing Code Box (No camera needed!) -->
+        <div id="waPairingBox" style="display:none; background:#fef9e7; border:2px solid #d4af37; border-radius:12px; padding:16px; margin-bottom:8px;">
+          <div style="font-size:0.85rem; font-weight:800; color:#b8972b;">🔑 كود الربط الرقمي المباشر (بدون كاميرا):</div>
+          <div id="waPairingCodeVal" style="font-size:2.2rem; font-weight:900; letter-spacing:6px; color:#123d42; margin:8px 0; font-family:monospace; direction:ltr;">----</div>
+          <div style="font-size:0.78rem; color:#475569; line-height:1.6;">
+            في واتساب: اضغط <strong>الأجهزة المرتبطة</strong> ➔ اضغط <strong>ربط جهاز</strong> ➔ ثم اضغط بالأسفل <strong>«الربط باستخدام رقم الهاتف بدلاً من ذلك»</strong> واكتب هذا الكود!
+          </div>
         </div>
 
         <!-- QR Code Container -->
@@ -563,7 +572,7 @@
     const SUPABASE_URL = 'https://nifwgokownhyyksgcykk.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZndnb2tvd25oeXlrc2djeWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxMDEwNzAsImV4cCI6MjEwNzY3NzA3MH0.9IY6lY4uU85LvkdYZI0RyChH_UIWXGMSvtmS3Ks1cj0';
 
-    let WA_SERVICE_URL = localStorage.getItem('rifqa_wa_service_url') || 'http://localhost:3005';
+    let WA_SERVICE_URL = localStorage.getItem('rifqa_wa_service_url') || 'http://192.168.1.13:3005';
     let supabaseClient = null;
 
     let crmData = {
@@ -783,6 +792,15 @@
           if (qrLoading) qrLoading.style.display = 'none';
           if (qrImg) { qrImg.src = data.qr; qrImg.style.display = 'block'; }
           if (qrHint) qrHint.style.display = 'block';
+
+          // Show Pairing Code if available
+          const pBox = document.getElementById('waPairingBox');
+          const pVal = document.getElementById('waPairingCodeVal');
+          if (pBox && pVal && data.pairingCode) {
+            pBox.style.display = 'block';
+            pVal.textContent = data.pairingCode;
+          }
+
         } else {
           if (pill) {
             pill.style.background = 'rgba(59,130,246,0.15)';

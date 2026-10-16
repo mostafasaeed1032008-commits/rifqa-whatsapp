@@ -51,11 +51,14 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // State
 let sock = null;
 let currentQR = null;
+let currentPairingCode = null;
+const PHONE_NUMBER = '201554463293';
 let connectionStatus = 'disconnected'; // disconnected, scan_qr, connecting, connected
 let connectedPhone = '';
 let autoReplyEnabled = true;
 const processedMsgIds = new Set();
 const userStages = new Map();
+
 
 console.log('====================================================');
 console.log('🕋  RIFQA SMART WHATSAPP & CRM REALTIME ENGINE');
@@ -122,6 +125,25 @@ async function initWhatsApp() {
     });
 
     sock.ev.on('creds.update', saveCreds);
+
+    // Auto-generate 8-digit Pairing Code for direct linking without camera
+    if (!state.creds.registered) {
+      setTimeout(async () => {
+        try {
+          if (!sock?.user) {
+            currentPairingCode = await sock.requestPairingCode(PHONE_NUMBER);
+            console.log('\n======================================================');
+            console.log(`🔑 كود الربط الرقمي المباشر لواتساب (Pairing Code):`);
+            console.log(`               👉  ${currentPairingCode}  👈`);
+            console.log('======================================================');
+            console.log('في واتساب: الأجهزة المرتبطة ➔ ربط برقم الهاتف واكتب الكود!');
+            console.log('الكود ثابت ومش بيتغير كل 20 ثانية!');
+            console.log('======================================================\n');
+          }
+        } catch(e) {}
+      }, 3500);
+    }
+
 
     sock.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
@@ -383,6 +405,7 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({
       status: connectionStatus,
       qr: currentQR,
+      pairingCode: currentPairingCode,
       phone: connectedPhone,
       autoReply: autoReplyEnabled
     }));
