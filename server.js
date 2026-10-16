@@ -53,6 +53,13 @@ const {
   proto
 } = baileys;
 
+process.on('uncaughtException', (err) => {
+  console.error('[Process UncaughtException]:', err.message || err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Process UnhandledRejection]:', reason?.message || reason);
+});
+
 // ==============================================================================
 // 2. Global Configuration & State
 // ==============================================================================
@@ -472,19 +479,21 @@ async function initWhatsApp() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // Auto-generate 8-digit Pairing Code if session is not yet registered
-    if (!state.creds.registered) {
+    // Auto-generate 8-digit Pairing Code if session is not yet registered and no user credentials exist
+    if (!state.creds.registered && !state.creds.me) {
       setTimeout(async () => {
         try {
-          if (!sock?.user) {
+          if (!sock?.user && connectionStatus !== 'connected') {
             currentPairingCode = await sock.requestPairingCode(PHONE_NUMBER);
             console.log('\n======================================================');
             console.log(`🔑 كود الربط الرقمي المباشر لواتساب (Pairing Code):`);
             console.log(`               👉  ${currentPairingCode}  👈`);
             console.log('======================================================\n');
           }
-        } catch (e) {}
-      }, 3500);
+        } catch (e) {
+          console.warn('[Pairing Code Guard]:', e.message);
+        }
+      }, 4000);
     }
 
     sock.ev.on('connection.update', async (update) => {
@@ -515,6 +524,8 @@ async function initWhatsApp() {
         currentQR = null;
         const userJid = sock.user?.id || '';
         connectedPhone = userJid.split(':')[0] || '';
+        state.creds.registered = true;
+        try { await saveCreds(); } catch (e) {}
         console.log('\n======================================================');
         console.log(`[WhatsApp] 🟢 CONNECTED! Phone: ${connectedPhone}`);
         console.log(`[WhatsApp] Rifqa Smart Triage Engine is LIVE!`);
