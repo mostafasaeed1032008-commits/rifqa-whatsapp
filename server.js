@@ -77,10 +77,12 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // Meta WhatsApp Cloud API Official Configuration
 const META_CONFIG = {
   token: 'EAAaKGm8MFqIBSigeRcmoKAYtXFuhsRBCOaH5xYayQBFaYVrIOmjAbVSayEWAzZAsj92s1B2aNd7NpaNFZCXztU2LwZABkZCHPXOzRqkBcRTk8Is9nl9g1ricC7h35T7ZBl2ZCOZAwtou2gOdTZABC1ZBTOkOB0v10lbd16iPKebXLJIFvJ1DkCEvjNxNWcfhZBsVHqmbwBvV3j3y9qmT31f2YX88rFDgk5r6cZC7ZAuhrG1tgJbMQhCGAkXsxZAC8sApClFy9E0KZAcKxTZCeY74NhruG9MCAZDZD',
-  phoneNumberId: '1349866838214310',
+  phoneNumberId: '1299183416621489',
   wabaId: '1753529392573038',
   verifyToken: 'rifqa_2026'
 };
+
+const ENABLE_BAILEYS = process.env.ENABLE_BAILEYS === 'true';
 
 // Live Engine State
 let sock = null;
@@ -299,7 +301,8 @@ async function sendNativeInteractiveReply(socket, jid, replyData) {
 // ==============================================================================
 // 6.1 Meta WhatsApp Cloud API Message Dispatcher (Official Native UI)
 // ==============================================================================
-async function sendMetaCloudMessage(toPhone, replyData) {
+async function sendMetaCloudMessage(toPhone, replyData, phoneId = null) {
+  const targetPhoneId = phoneId || META_CONFIG.phoneNumberId;
   const { text, header = 'شركة رِفقة للعمرة', footer = 'رِفقة - رفيقكم لبيت الله الحرام', buttons = [] } = replyData;
 
   let payload;
@@ -364,7 +367,7 @@ async function sendMetaCloudMessage(toPhone, replyData) {
 
   const postData = JSON.stringify(payload);
   return new Promise((resolve, reject) => {
-    const req = https.request(`https://graph.facebook.com/v21.0/${META_CONFIG.phoneNumberId}/messages`, {
+    const req = https.request(`https://graph.facebook.com/v21.0/${targetPhoneId}/messages`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${META_CONFIG.token}`,
@@ -435,8 +438,9 @@ async function handleMetaInbound(payload) {
       // Compute Luxury Umrah Triage Reply
       const reply = computeTriageReply(text, buttonId, fromPhone, lead);
       if (reply && autoReplyEnabled) {
-        console.log(`[Meta Outbound Reply] Sending Luxury Umrah reply to ${fromPhone}...`);
-        const sendRes = await sendMetaCloudMessage(fromPhone, reply);
+        const recipientPhoneId = value?.metadata?.phone_number_id || META_CONFIG.phoneNumberId;
+        console.log(`[Meta Outbound Reply] Sending Luxury Umrah reply to ${fromPhone} via phoneId ${recipientPhoneId}...`);
+        const sendRes = await sendMetaCloudMessage(fromPhone, reply, recipientPhoneId);
         console.log(`[Meta Outbound Result]:`, sendRes?.messages ? 'Delivered successfully' : JSON.stringify(sendRes));
 
         existingMessages.push({
@@ -645,6 +649,13 @@ function computeTriageReply(userText, buttonId, phone, existingLead) {
 // 8. Baileys WhatsApp Connection Manager
 // ==============================================================================
 async function initWhatsApp() {
+  if (!ENABLE_BAILEYS) {
+    connectionStatus = 'connected';
+    connectedPhone = META_CONFIG.phoneNumberId;
+    console.log('[Meta Cloud API Mode] Official Meta Webhook is active and waiting for Meta events.');
+    return;
+  }
+
   connectionStatus = 'connecting';
   console.log('[WhatsApp] Initializing connection socket...');
 
@@ -926,16 +937,20 @@ const server = http.createServer(async (req, res) => {
     req.on('end', async () => {
       try {
         const { to, text } = JSON.parse(body);
-        if (!to || !text || !sock) {
+        if (!to || !text) {
           res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-          return res.end(JSON.stringify({ error: 'Missing parameters or WhatsApp socket not ready' }));
+          return res.end(JSON.stringify({ error: 'Missing parameters' }));
         }
 
         let cleanPhone = to.replace(/[^0-9]/g, '');
         if (cleanPhone.startsWith('0')) cleanPhone = '2' + cleanPhone;
-        const jid = `${cleanPhone}@s.whatsapp.net`;
 
-        await sock.sendMessage(jid, { text: text });
+        if (sock && sock.user) {
+          const jid = `${cleanPhone}@s.whatsapp.net`;
+          await sock.sendMessage(jid, { text: text });
+        } else {
+          await sendMetaCloudMessage(cleanPhone, { text: text });
+        }
 
         // Sync to Supabase
         let lead = await fetchLeadFromSupabase(cleanPhone);
