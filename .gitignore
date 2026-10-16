@@ -4,6 +4,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# WhatsApp Session Auth (Never commit private keys!)
+whatsapp_auth_session/
+*.session
+
 # Environment
 .env
 .env.local
@@ -13,5 +17,5 @@ Thumbs.db
 .DS_Store
 
 # Temporary outputs
-*.png
+phone_qr_live.png
 test_*.py
