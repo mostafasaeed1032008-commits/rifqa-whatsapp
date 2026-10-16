@@ -4,8 +4,8 @@
  * 🕋  RIFQA SMART WHATSAPP & CRM REALTIME ENGINE
  * ==============================================================================
  * - Clean Code Architecture
- * - Native Flow Interactive Buttons & Dropdown Lists (Baileys proto.InteractiveMessage)
- * - Safe Hybrid Fallback: Native Buttons + One-Tap wa.me Links
+ * - Native WhatsApp Interactive List Menus (single_select) & Native Buttons (quick_reply)
+ * - Professional Luxury Brand Copywriting (Zero spam links, zero cheesy emojis)
  * - 4 Umrah Programs & Live Commission Triage (Zero "شعبي")
  * - Realtime Supabase Synchronization & Admin CRM Integration
  * - Port: process.env.PORT || 3005
@@ -23,7 +23,7 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
 // ==============================================================================
-// 1. Dependency Loader (Local node_modules with graceful fallback)
+// 1. Dependency Loader
 // ==============================================================================
 let baileys, QRCode, pino;
 try {
@@ -48,16 +48,17 @@ const makeWASocket = baileys.default || baileys.makeWASocket;
 const { 
   DisconnectReason, 
   useMultiFileAuthState, 
-  fetchLatestBaileysVersion,
-  generateWAMessageFromContent,
-  proto
+  fetchLatestBaileysVersion 
 } = baileys;
 
 process.on('uncaughtException', (err) => {
-  console.error('[Process UncaughtException]:', err.message || err);
+  console.error('[Process UncaughtException]:', err.stack || err.message || err);
 });
 process.on('unhandledRejection', (reason) => {
-  console.error('[Process UnhandledRejection]:', reason?.message || reason);
+  console.error('[Process UnhandledRejection]:', reason?.stack || reason?.message || reason);
+});
+process.on('exit', (code) => {
+  console.log(`[Process EXIT Event] Code: ${code}`);
 });
 
 // ==============================================================================
@@ -85,55 +86,47 @@ const userStages = new Map();
 const RIFQA_PROGRAMS = {
   prog_1: {
     id: 'prog_1',
-    num: 1,
-    name: 'الاقتصادي المميز (قريب المشي 3 نجوم)',
+    name: 'البرنامج الاقتصادي المميز (3 نجوم قريب المشي)',
     price: 42000,
     priceStr: '42,000 ج.م',
     commission: 9000,
-    hotelMakkah: 'فندق 3 نجوم 500 متر مشي مباشر للحرم (أجياد / إبراهيم الخليل) بدون انتظار باصات',
-    hotelMadinah: 'المنطقة المركزية خطوات من الحرم النبوي',
+    hotelMakkah: 'فندق 3 نجوم يبعد 500 متر فقط مشي مباشر للحرم (أجياد / إبراهيم الخليل) دون باصات',
+    hotelMadinah: 'المنطقة المركزية بجوار الحرم النبوي',
     duration: '14 يوماً',
-    priority: 'فندق 3 نجوم قريب مشي بدون باصات',
-    actionLink: `wa.me/${PHONE_NUMBER}?text=1`
+    priority: 'فندق 3 نجوم قريب مشي دون باصات'
   },
   prog_2: {
     id: 'prog_2',
-    num: 2,
-    name: 'البرنامج الاقتصادي (14 يوم)',
+    name: 'البرنامج الاقتصادي المعتمد (14 يوماً)',
     price: 35500,
     priceStr: '35,500 ج.م',
     commission: 7000,
-    hotelMakkah: 'فنادق حديثة بالعزيزية / محبس الجن مع باصات شاتل مكيفة 24 ساعة لساحة الحرم',
+    hotelMakkah: 'فنادق حديثة بالعزيزية / محبس الجن مع باصات شاتل مكيفة على مدار 24 ساعة لساحة الحرم',
     hotelMadinah: 'المنطقة المركزية',
     duration: '14 يوماً',
-    priority: 'أقل تكلفة مالية ممكنة (اقتصادي شاتل)',
-    actionLink: `wa.me/${PHONE_NUMBER}?text=2`
+    priority: 'أوفر تكلفة اقتصادية مع باصات شاتل'
   },
   prog_3: {
     id: 'prog_3',
-    num: 3,
-    name: 'البرنامج المميز (4 نجوم راقي)',
+    name: 'البرنامج المميز (4 نجوم فندقي راقي)',
     price: 54500,
     priceStr: '54,500 ج.م',
     commission: 13000,
-    hotelMakkah: 'فندق 4 نجوم فخم شامل بوفيه إفطار مفتوح يومياً',
+    hotelMakkah: 'فندق 4 نجوم راقي شامل بوفيه إفطار مفتوح يومياً',
     hotelMadinah: 'صف ثاني مباشر على ساحة الحرم النبوي',
     duration: '10 إلى 14 يوماً',
-    priority: 'فندق 4 نجوم فخم مع بوفيه إفطار',
-    actionLink: `wa.me/${PHONE_NUMBER}?text=3`
+    priority: 'فندق 4 نجوم فخم مع بوفيه إفطار'
   },
   prog_4: {
     id: 'prog_4',
-    num: 4,
     name: 'برنامج الـ 5 نجوم والـ VIP',
     price: 85000,
     priceStr: '85,000 ج.م',
     commission: 26000,
-    hotelMakkah: 'أبراج الساعة صف أول كعبة مباشرة (فيرمونت / سويس) أو جبل عمر',
+    hotelMakkah: 'أبراج الساعة صف أول مباشر ومطل على الكعبة (فيرمونت / سويس) أو جبل عمر',
     hotelMadinah: 'صف أول مباشر على الحرم النبوي (دار التقوى / أوبروي)',
     duration: '10 إلى 14 يوماً',
-    priority: 'أبراج الساعة صف أول كعبة وسيارات VIP',
-    actionLink: `wa.me/${PHONE_NUMBER}?text=4`
+    priority: 'أبراج الساعة صف أول كعبة وسيارات VIP خاصة'
   }
 };
 
@@ -189,7 +182,7 @@ function extractMessageContent(msg) {
     if (nativeFlow) {
       try {
         const parsed = JSON.parse(nativeFlow.paramsJson || '{}');
-        const id = parsed.id || nativeFlow.selectedButtonId || '';
+        const id = parsed.id || parsed.rowId || nativeFlow.selectedButtonId || '';
         return { text: id, buttonId: id, isButton: true };
       } catch (e) {
         const id = nativeFlow.selectedButtonId || '';
@@ -228,10 +221,10 @@ function extractMessageContent(msg) {
 }
 
 // ==============================================================================
-// 6. Interactive Message Dispatcher (Native Flow + Plain Text Fallback)
+// 6. Native Interactive Message Dispatcher (Pure Native Menu & Buttons)
 // ==============================================================================
-async function sendSmartInteractiveReply(socket, jid, replyData) {
-  const { text, header = 'رِفقة لرحلات العمرة 🕋', footer = 'اختر من القائمة بالأسفل أو اضغط الرابط ⬇️', buttons = [] } = replyData;
+async function sendNativeInteractiveReply(socket, jid, replyData) {
+  const { text, header = 'شركة رِفقة للعمرة', footer = 'رِفقة - رفيقكم لبيت الله الحرام', buttons = [] } = replyData;
 
   // If no buttons, send clean plain text
   if (!buttons || buttons.length === 0) {
@@ -248,17 +241,7 @@ async function sendSmartInteractiveReply(socket, jid, replyData) {
             sections: btn.sections
           })
         };
-      } else if (btn.type === 'cta_url') {
-        return {
-          name: 'cta_url',
-          buttonParamsJson: JSON.stringify({
-            display_text: btn.displayText,
-            url: btn.url,
-            merchant_url: btn.url
-          })
-        };
       } else {
-        // default quick_reply
         return {
           name: 'quick_reply',
           buttonParamsJson: JSON.stringify({
@@ -269,53 +252,43 @@ async function sendSmartInteractiveReply(socket, jid, replyData) {
       }
     });
 
-    const interactiveMessage = proto.Message.InteractiveMessage.create({
-      body: proto.Message.InteractiveMessage.Body.create({ text }),
-      footer: proto.Message.InteractiveMessage.Footer.create({ text: footer }),
-      header: proto.Message.InteractiveMessage.Header.create({
-        title: header,
-        hasMediaAttachment: false
-      }),
-      nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-        buttons: formattedButtons
-      })
-    });
-
-    const waMsg = generateWAMessageFromContent(jid, {
+    const payload = {
       viewOnceMessage: {
         message: {
-          messageContextInfo: {
-            deviceListMetadata: {},
-            deviceListMetadataVersion: 2
-          },
-          interactiveMessage: interactiveMessage
+          interactiveMessage: {
+            header: { title: header, hasMediaAttachment: false },
+            body: { text: text },
+            footer: { text: footer },
+            nativeFlowMessage: {
+              buttons: formattedButtons
+            }
+          }
         }
       }
-    }, { userJid: socket.user?.id });
+    };
 
-    await socket.relayMessage(jid, waMsg.message, { messageId: waMsg.key.id });
-    return waMsg;
+    return await socket.sendMessage(jid, payload);
   } catch (err) {
-    console.warn('[Buttons Fallback to Text]:', err.message);
+    console.warn('[Interactive Fallback to Text]:', err.message);
     return await socket.sendMessage(jid, { text });
   }
 }
 
 // ==============================================================================
-// 7. Rifqa Triage Engine (Intelligent Routing & Commission Computation)
+// 7. Rifqa Triage Engine (Clean Luxury Copy & Native Menus)
 // ==============================================================================
 function computeTriageReply(userText, buttonId, phone, existingLead) {
   const lower = (userText || '').trim().toLowerCase();
   const clickedId = buttonId || '';
 
   // 1. Human Escalation Trigger
-  const humanWords = ['موظف', 'مدير', 'تليفون', 'رن عليا', 'كلمني', 'مسؤول', 'حد يكلمني', 'هشتكي', 'انسان'];
+  const humanWords = ['موظف', 'مدير', 'تليفون', 'رن عليا', 'كلمني', 'مسؤول', 'حد يكلمني', 'انسان'];
   if (clickedId === 'ask_human' || humanWords.some(w => lower.includes(w))) {
     return {
-      text: 'تمام يا فندم، تم إشعار مدير الحجوزات 👤 وسيقوم بالتواصل مع حضرتك فوراً للرد على كافة الاستفسارات وتثبيت السعر.',
+      text: 'تم إشعار مدير الحجوزات، وسيقوم بالتواصل مع حضرتك فوراً للرد على كافة الاستفسارات وتثبيت السعر.',
       stage: 'needs_human',
       buttons: [
-        { type: 'quick_reply', displayText: 'عرض البرامج والأسعار 🕋', id: 'show_programs' }
+        { type: 'quick_reply', displayText: 'عرض برامج العمرة', id: 'show_programs' }
       ]
     };
   }
@@ -324,10 +297,10 @@ function computeTriageReply(userText, buttonId, phone, existingLead) {
   const depositWords = ['جواز', 'جوازات', 'صور', 'مقدم', 'عربون', 'حجز', 'احجز'];
   if (clickedId === 'book_now' || depositWords.some(w => lower.includes(w))) {
     return {
-      text: 'مبارك مقدماً يا فندم زيارة بيت الله الحرام 🕋✨\nتفضل بإرسال صور الجوازات واضحة هنا، وسيقوم مسؤول الحجوزات بتثبيت السعر وإصدار العقد فوراً.',
+      text: 'مبارك مقدماً زيارة بيت الله الحرام.\nيرجى إرسال صور جوازات السفر واضحة هنا، وسيقوم مسؤول الحجوزات بإصدار العقد وتثبيت المقاعد فوراً.',
       stage: 'deposit_paid',
       buttons: [
-        { type: 'quick_reply', displayText: 'تحدث مع مدير الحجوزات 👤', id: 'ask_human' }
+        { type: 'quick_reply', displayText: 'التواصل مع مسؤول الحجوزات', id: 'ask_human' }
       ]
     };
   }
@@ -337,14 +310,14 @@ function computeTriageReply(userText, buttonId, phone, existingLead) {
     userStages.set(phone, 'done');
     const p = RIFQA_PROGRAMS.prog_1;
     return {
-      text: `🎯 تم اختيار «${p.name}» بالملي:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• المدة: ${p.duration}.\n• السعر للفرد: ${p.priceStr} فقط شامل الطيران والتأشيرة والباركود والانتقالات.\n\nلتأكيد المقاعد، اضغط زر الحجز أدناه أو أرسل صور الجوازات هنا للمتابعة فوراً 🪪`,
+      text: `تم اختيار «${p.name}»:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• المدة: ${p.duration}.\n• السعر للفرد: ${p.priceStr} فقط شامل الطيران والتأشيرة والباركود والانتقالات.\n\nلتأكيد المقاعد وتثبيت السعر، يرجى الضغط على زر تأكيد الحجز أدناه وإرسال صور جوازات السفر.`,
       stage: 'qualified',
       program: p.name,
       commission: p.commission,
       priority: p.priority,
       buttons: [
-        { type: 'quick_reply', displayText: 'تأكيد وحجز الآن 🪪', id: 'book_now' },
-        { type: 'quick_reply', displayText: 'تحدث مع موظف 👤', id: 'ask_human' }
+        { type: 'quick_reply', displayText: 'تأكيد الحجز الآن', id: 'book_now' },
+        { type: 'quick_reply', displayText: 'التواصل مع مسؤول الحجوزات', id: 'ask_human' }
       ]
     };
   }
@@ -353,14 +326,14 @@ function computeTriageReply(userText, buttonId, phone, existingLead) {
     userStages.set(phone, 'done');
     const p = RIFQA_PROGRAMS.prog_2;
     return {
-      text: `🎯 تم اختيار «${p.name}» الأوفر تكلفة:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• المدة: ${p.duration}.\n• السعر للفرد: يبدأ من ${p.priceStr} فقط شامل الطيران والتأشيرة!\n\nاضغط زر الحجز أدناه أو أرسل صور الجوازات هنا لتثبيت السعر وحجز المقاعد.`,
+      text: `تم اختيار «${p.name}»:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• المدة: ${p.duration}.\n• السعر للفرد: يبدأ من ${p.priceStr} فقط شامل الطيران والتأشيرة!\n\nلتأكيد المقاعد وتثبيت السعر، يرجى الضغط على زر تأكيد الحجز أدناه وإرسال صور جوازات السفر.`,
       stage: 'qualified',
       program: p.name,
       commission: p.commission,
       priority: p.priority,
       buttons: [
-        { type: 'quick_reply', displayText: 'تأكيد وحجز الآن 🪪', id: 'book_now' },
-        { type: 'quick_reply', displayText: 'تحدث مع موظف 👤', id: 'ask_human' }
+        { type: 'quick_reply', displayText: 'تأكيد الحجز الآن', id: 'book_now' },
+        { type: 'quick_reply', displayText: 'التواصل مع مسؤول الحجوزات', id: 'ask_human' }
       ]
     };
   }
@@ -369,14 +342,14 @@ function computeTriageReply(userText, buttonId, phone, existingLead) {
     userStages.set(phone, 'done');
     const p = RIFQA_PROGRAMS.prog_3;
     return {
-      text: `🎯 تم اختيار «${p.name}»:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• المدة: ${p.duration}.\n• السعر للفرد: ${p.priceStr} شامل باصات VIP وطيران مباشر.\n\nاضغط زر الحجز أدناه أو تفضل بإرسال صور الجوازات لتأكيد الحجز.`,
+      text: `تم اختيار «${p.name}»:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• المدة: ${p.duration}.\n• السعر للفرد: ${p.priceStr} شامل باصات VIP وطيران مباشر.\n\nلتأكيد المقاعد وتثبيت السعر، يرجى الضغط على زر تأكيد الحجز أدناه وإرسال صور جوازات السفر.`,
       stage: 'qualified',
       program: p.name,
       commission: p.commission,
       priority: p.priority,
       buttons: [
-        { type: 'quick_reply', displayText: 'تأكيد وحجز الآن 🪪', id: 'book_now' },
-        { type: 'quick_reply', displayText: 'تحدث مع موظف 👤', id: 'ask_human' }
+        { type: 'quick_reply', displayText: 'تأكيد الحجز الآن', id: 'book_now' },
+        { type: 'quick_reply', displayText: 'التواصل مع مسؤول الحجوزات', id: 'ask_human' }
       ]
     };
   }
@@ -385,47 +358,47 @@ function computeTriageReply(userText, buttonId, phone, existingLead) {
     userStages.set(phone, 'done');
     const p = RIFQA_PROGRAMS.prog_4;
     return {
-      text: `🕌 تم اختيار «${p.name}» الخاص بـ «رِفقة»:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• الانتقالات: قطار الحرمين السريع وسيارات GMC خاصة.\n• السعر: يبدأ من ${p.priceStr}.\n\n🔔 تم إشعار مدير حجوزات الـ VIP وسيقوم بالتواصل مع حضرتك فوراً لتأكيد إطلالة الغرفة وتجهيز التأشيرة.`,
+      text: `تم اختيار «${p.name}» الخاص بـ «رِفقة»:\n\n• مكة المكرمة: ${p.hotelMakkah}.\n• المدينة المنورة: ${p.hotelMadinah}.\n• الانتقالات: قطار الحرمين السريع وسيارات خاصة.\n• السعر: يبدأ من ${p.priceStr}.\n\nتم إشعار مدير حجوزات الـ VIP وسيقوم بالتواصل مع حضرتك فوراً لتأكيد إطلالة الغرفة وتجهيز التأشيرة.`,
       stage: 'needs_human',
       program: p.name,
       commission: p.commission,
       priority: p.priority,
       buttons: [
-        { type: 'quick_reply', displayText: 'تأكيد وحجز الآن 🪪', id: 'book_now' },
-        { type: 'quick_reply', displayText: 'تحدث مع مدير الـ VIP 👤', id: 'ask_human' }
+        { type: 'quick_reply', displayText: 'تأكيد الحجز الآن', id: 'book_now' },
+        { type: 'quick_reply', displayText: 'التواصل مع مدير الـ VIP', id: 'ask_human' }
       ]
     };
   }
 
   // 4. Companionship Routing & Programs Presentation
-  if (clickedId.startsWith('comp_') || lower.includes('لوحدي') || lower.includes('فردي') || lower.includes('اسرة') || lower.includes('أسرة') || lower.includes('كبار') || lower.includes('والد')) {
+  if (clickedId === 'show_programs' || clickedId.startsWith('comp_') || lower.includes('لوحدي') || lower.includes('فردي') || lower.includes('اسرة') || lower.includes('أسرة') || lower.includes('كبار') || lower.includes('والد')) {
     userStages.set(phone, 'step_program');
     const isParents = clickedId === 'comp_parents' || lower.includes('كبار') || lower.includes('والد');
     const isFamily = clickedId === 'comp_family' || lower.includes('اسرة') || lower.includes('أسرة');
-    const compText = isParents ? 'مع الوالدين وكبار سن' : (isFamily ? 'مع الأسرة وأطفال' : 'مسافر منفرد');
+    const compText = isParents ? 'مع الوالدين (كبار السن)' : (isFamily ? 'مع الأسرة والأطفال' : 'مسافر منفرد');
 
     return {
-      text: `ربنا يحفظكم ويبارك فيكم ويتقبل مقدماً يا رب 🤲\nعشان نحدد البرنامج المناسب بالملي، دي برامج «رِفقة» المعتمدة:\n\n1️⃣ الاقتصادي المميز (3 نجوم 500م مشي مباشر - 42,000 ج) ➔ wa.me/${PHONE_NUMBER}?text=1\n2️⃣ البرنامج الاقتصادي (14 يوم شاتل 24 ساعة - 35,500 ج) ➔ wa.me/${PHONE_NUMBER}?text=2\n3️⃣ البرنامج المميز (4 نجوم راقي شامل إفطار بوفيه - 54,500 ج) ➔ wa.me/${PHONE_NUMBER}?text=3\n4️⃣ برنامج الـ 5 نجوم والـ VIP (أبراج الساعة صف أول كعبة - 85,000 ج) ➔ wa.me/${PHONE_NUMBER}?text=4\n\n(اختر البرنامج المناسب من القائمة بالأسفل أو اضغط الرابط ⬇️)`,
+      text: `برامج العمرة المعتمدة لدى «رِفقة»:\n\n• البرنامج الاقتصادي المميز: 3 نجوم 500 متر مشي مباشر للحرم (42,000 ج.م)\n• البرنامج الاقتصادي: 14 يوماً شاتل باص 24 ساعة (35,500 ج.م)\n• البرنامج المميز: 4 نجوم راقي شامل إفطار بوفيه مفتوح (54,500 ج.م)\n• برنامج الـ 5 نجوم والـ VIP: أبراج الساعة صف أول كعبة (85,000 ج.م)\n\nيرجى فتح القائمة أدناه لاختيار البرنامج المناسب:`,
       stage: 'proposal_sent',
       companions: compText,
       pax: compText === 'مسافر منفرد' ? 1 : 2,
       buttons: [
         {
           type: 'single_select',
-          title: 'اختر برنامج العمرة 🕋',
+          title: 'اختيار برنامج العمرة',
           sections: [
             {
               title: 'برامج عمرة رِفقة المعتمدة',
               rows: [
-                { id: 'prog_1', title: '1️⃣ الاقتصادي المميز', description: '42,000 ج - 3 نجوم 500م مشي مباشر' },
-                { id: 'prog_2', title: '2️⃣ البرنامج الاقتصادي', description: '35,500 ج - 14 يوم شاتل 24 ساعة' },
-                { id: 'prog_3', title: '3️⃣ البرنامج المميز', description: '54,500 ج - 4 نجوم مع إفطار بوفيه' },
-                { id: 'prog_4', title: '4️⃣ برنامج النخبة VIP', description: '85,000 ج - أبراج الساعة صف أول كعبة' }
+                { id: 'prog_1', rowId: 'prog_1', title: 'البرنامج الاقتصادي المميز', description: '42,000 ج.م - 3 نجوم 500م مشي مباشر' },
+                { id: 'prog_2', rowId: 'prog_2', title: 'البرنامج الاقتصادي المعتمد', description: '35,500 ج.م - 14 يوماً شاتل باص 24 ساعة' },
+                { id: 'prog_3', rowId: 'prog_3', title: 'البرنامج المميز (4 نجوم)', description: '54,500 ج.م - فندق راقي مع إفطار بوفيه' },
+                { id: 'prog_4', rowId: 'prog_4', title: 'برنامج النخبة والـ VIP', description: '85,000 ج.م - أبراج الساعة صف أول كعبة' }
               ]
             }
           ]
         },
-        { type: 'quick_reply', displayText: 'تحدث مع موظف 👤', id: 'ask_human' }
+        { type: 'quick_reply', displayText: 'التواصل مع مسؤول الحجوزات', id: 'ask_human' }
       ]
     };
   }
@@ -433,24 +406,24 @@ function computeTriageReply(userText, buttonId, phone, existingLead) {
   // 5. Default Welcome Greeting
   userStages.set(phone, 'step_companions');
   return {
-    text: `أهلاً بحضرتك في «رِفقة» لرحلات العمرة 🕋✨\nكتب الله لكم زيارة بيته الحرام عاجلاً غير آجل.\n\nعشان نحدد لحضرتك البرنامج المناسب وبأعلى راحة، ممكن توضح لي مين هيسافر معك؟\n\n1️⃣ لوحدي (مسافر منفرد) ➔ wa.me/${PHONE_NUMBER}?text=1\n2️⃣ مع الأسرة وأطفال ➔ wa.me/${PHONE_NUMBER}?text=2\n3️⃣ مع الوالدين وكبار سن 👵👴 ➔ wa.me/${PHONE_NUMBER}?text=3\n\n(يمكنك الاختيار من القائمة بالأسفل، أو الضغط على الرابط، أو كتابة الرقم ⬇️)`,
+    text: `أهلاً بحضرتك في «رِفقة» لرحلات العمرة.\nتقبل الله منكم صالح الأعمال ومبارك الزيارة مقدماً.\n\nلتحديد البرنامج الأنسب لرحلتكم وتفاصيل الإقامة، يرجى اختيار الفئة المسافرة من القائمة أدناه:`,
     stage: 'new_lead',
     buttons: [
       {
         type: 'single_select',
-        title: 'اختر رفقاء السفر 👥',
+        title: 'تحديد رفقاء السفر',
         sections: [
           {
-            title: 'من سيسافر معكم؟',
+            title: 'من سيسافر معكم في هذه الرحلة؟',
             rows: [
-              { id: 'comp_solo', title: '1️⃣ مسافر منفرد (لوحدي)', description: 'حجز غرفة مفردة أو ثنائية' },
-              { id: 'comp_family', title: '2️⃣ مع الأسرة وأطفال', description: 'برامج عائلية مريحة وفسيحة' },
-              { id: 'comp_parents', title: '3️⃣ مع الوالدين وكبار سن', description: 'أقرب الفنادق لتجنب أي مشقة' }
+              { id: 'comp_solo', rowId: 'comp_solo', title: 'مسافر منفرد (لوحدي)', description: 'حجز غرفة مفردة أو مشاركة ثنائية' },
+              { id: 'comp_family', rowId: 'comp_family', title: 'مع الأسرة والأطفال', description: 'برامج عائلية مريحة وفسيحة' },
+              { id: 'comp_parents', rowId: 'comp_parents', title: 'مع الوالدين (كبار السن)', description: 'أقرب الفنادق لساحة الحرم لتجنب المشقة' }
             ]
           }
         ]
       },
-      { type: 'quick_reply', displayText: 'تحدث مع موظف 👤', id: 'ask_human' }
+      { type: 'quick_reply', displayText: 'التواصل مع مسؤول الحجوزات', id: 'ask_human' }
     ]
   };
 }
@@ -474,12 +447,14 @@ async function initWhatsApp() {
       version,
       logger: pino({ level: 'silent' }),
       auth: state,
-      browser: ['Rifqa CRM', 'Chrome', '1.0.0']
+      browser: ['Rifqa CRM', 'Chrome', '1.0.0'],
+      syncFullHistory: false,
+      markOnlineOnConnect: false
     });
 
     sock.ev.on('creds.update', saveCreds);
 
-    // Auto-generate 8-digit Pairing Code if session is not yet registered and no user credentials exist
+    // Auto-generate 8-digit Pairing Code if session is not yet registered
     if (!state.creds.registered && !state.creds.me) {
       setTimeout(async () => {
         try {
@@ -572,16 +547,22 @@ async function initWhatsApp() {
           time: now
         });
 
-        // Compute Automated Triage Reply
-        if (!isFromMe && autoReplyEnabled && lead?.stage !== 'needs_human') {
+        // Compute Automated Triage Reply (Allows owner self-testing without loop)
+        const isSelfTest = isFromMe && fromJid.includes(PHONE_NUMBER);
+        const shouldReply = autoReplyEnabled && lead?.stage !== 'needs_human' && (!isFromMe || isSelfTest);
+
+        if (shouldReply) {
           const reply = computeTriageReply(text, buttonId, senderPhone, lead);
           if (reply) {
             try {
               await sock.sendPresenceUpdate('composing', fromJid);
               await new Promise(r => setTimeout(r, 600));
 
-              // Send via Interactive Native Flow Message with Text Fallback
-              await sendSmartInteractiveReply(sock, fromJid, reply);
+              // Send native interactive message with dropdown list & buttons
+              const sentMsg = await sendNativeInteractiveReply(sock, fromJid, reply);
+              if (sentMsg?.key?.id) {
+                processedMsgIds.add(sentMsg.key.id);
+              }
 
               existingMessages.push({
                 id: Date.now() + 1,
