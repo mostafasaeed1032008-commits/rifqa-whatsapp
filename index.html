@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>رِفقة CRM الذكي | فرز معتمري الواتساب والربط السحابي 24/7</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase JS Client for 24/7 Serverless Realtime Sync -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary-dark: #0b2528;
+      --primary: #123d42;
+      --primary-light: #1c555c;
+      --gold: #d4af37;
+      --gold-hover: #b8972b;
+      --gold-light: #fef9e7;
+      --gold-border: #f1df99;
+      --wa-green: #25d366;
+      --wa-dark-green: #075e54;
+      --wa-teal: #128c7e;
+      --wa-chat-bg: #efeae2;
+      --wa-incoming: #ffffff;
+      --wa-outgoing: #d9fdd3;
+      --bg-body: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-main: #111b21;
+      --text-muted: #667781;
+      --border-color: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Tajawal', 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      direction: rtl;
+      text-align: right;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top App Header */
+    header.crm-header {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: #fff;
+      padding: 0.65rem 1.25rem;
+      border-bottom: 2px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      z-index: 50;
+      flex-shrink: 0;
+    }
+
+    .brand-section { display: flex; align-items: center; gap: 12px; }
+    .brand-logo-img { height: 38px; width: auto; background: rgba(255,255,255,0.08); padding: 2px; border-radius: var(--radius-sm); border: 1px solid rgba(212, 175, 55, 0.4); }
+    .brand-titles h1 { font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .brand-titles h1 span.tag-bot { background: #25d366; color: #075e54; font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
+    .brand-titles p { font-size: 0.75rem; color: #cbd5e1; }
+
+    .header-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .wa-number-badge { background: rgba(37, 211, 102, 0.15); border: 1px solid #25d366; color: #86efac; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    
+    .supabase-status-pill, .wa-status-pill {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; display: inline-block; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+
+    .btn-action {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-action:hover { background: rgba(255,255,255,0.2); }
+
+    .view-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .view-btn.active {
+      background: var(--gold);
+      color: var(--primary-dark);
+      border-color: var(--gold);
+      font-weight: 800;
+    }
+
+    /* Workspace */
+    .crm-workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .wa-view-container { display: flex; width: 100%; height: 100%; }
+
+    /* Left Chats Sidebar */
+    .wa-chats-sidebar {
+      width: 330px;
+      background: #ffffff;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .chats-search-bar { padding: 10px 14px; border-bottom: 1px solid var(--border-color); background: #f8fafc; }
+    .search-input-wrapper { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 10px; }
+    .search-input-wrapper input { border: none; outline: none; width: 100%; font-family: inherit; font-size: 0.84rem; }
+    .inbox-filter-pills { display: flex; gap: 4px; margin-top: 8px; overflow-x: auto; }
+    .filter-pill { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .filter-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .chats-list { flex: 1; overflow-y: auto; }
+    .chat-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.15s; }
+    .chat-item:hover { background: #f8fafc; }
+    .chat-item.active { background: #e6f4ea; border-right: 4px solid var(--wa-green); }
+    .chat-item-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #123d42 0%, #1c555c 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0; }
+    .chat-item-info { flex: 1; min-width: 0; }
+    .chat-item-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+    .chat-contact-name { font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-time { font-size: 0.68rem; color: var(--text-muted); }
+    .chat-item-snippet { font-size: 0.76rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Center Chat Window */
+    .wa-chat-window {
+      flex: 1;
+      background: var(--wa-chat-bg);
+      background-image: radial-gradient(#d1d7db 1px, transparent 1px);
+      background-size: 16px 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+
+    .chat-window-header {
+      background: #f0f2f5;
+      padding: 8px 16px;
+      border-bottom: 1px solid #d1d7db;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .chat-header-profile { display: flex; align-items: center; gap: 10px; }
+    .chat-header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .chat-messages-feed { flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; }
+    .message-row { display: flex; width: 100%; }
+    .message-row.incoming { justify-content: flex-start; }
+    .message-row.outgoing { justify-content: flex-end; }
+
+    .message-bubble {
+      max-width: 72%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      box-shadow: 0 1px 1.5px rgba(0,0,0,0.12);
+      position: relative;
+      white-space: pre-line;
+    }
+    .message-row.incoming .message-bubble { background: var(--wa-incoming); border-top-right-radius: 0; }
+    .message-row.outgoing .message-bubble { background: var(--wa-outgoing); border-top-left-radius: 0; }
+    .message-meta { font-size: 0.68rem; color: #667781; display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 3px; }
+
+    .chat-input-bar {
+      background: #f0f2f5;
+      padding: 8px 14px;
+      border-top: 1px solid #d1d7db;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .chat-input-box { flex: 1; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 0.88rem; outline: none; resize: none; height: 42px; }
+    .btn-send { background: var(--wa-teal); color: #fff; border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+
+    /* Right Lead Inspector */
+    .lead-inspector-pane {
+      width: 320px;
+      background: #ffffff;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+      padding: 16px;
+      gap: 14px;
+    }
+    .inspector-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+    .inspector-title { font-size: 0.78rem; font-weight: 800; color: #475569; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .inspector-val { font-size: 0.9rem; font-weight: 700; color: var(--primary-dark); }
+
+    /* Kanban View */
+    .kanban-view-container { display: none; width: 100%; height: 100%; overflow-x: auto; padding: 16px; gap: 14px; }
+    .kanban-col { min-width: 260px; max-width: 280px; background: #f1f5f9; border-radius: 8px; display: flex; flex-direction: column; max-height: 100%; }
+    .kanban-col-header { padding: 10px 14px; font-weight: 800; font-size: 0.85rem; border-bottom: 2px solid #cbd5e1; display: flex; justify-content: space-between; }
+    .kanban-col-cards { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .kanban-card { background: #fff; border-radius: 6px; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); cursor: pointer; border-right: 3px solid var(--gold); }
+    .kanban-card:hover { transform: translateY(-2px); transition: all 0.15s; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-overlay.active { display: flex; }
+    .modal-card { background: #ffffff; width: 92%; max-width: 580px; border-radius: var(--radius-md); box-shadow: 0 10px 25px rgba(0,0,0,0.15); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+    .modal-header { background: var(--primary-dark); color: #fff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--gold); }
+    .modal-body { padding: 1.25rem 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .modal-footer { padding: 12px 18px; background: #f8fafc; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 8px; }
+
+    .toast { position: fixed; bottom: 20px; left: 20px; background: #1e293b; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 0.84rem; font-weight: 700; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .toast.show { display: block; animation: slideUp 0.3s forwards; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="crm-header">
+    <div class="brand-section">
+      <img src="logo.png" alt="رِفقة" class="brand-logo-img" onerror="this.style.display='none'">
+      <div class="brand-titles">
+        <h1>رِفقة CRM الذكي <span class="tag-bot">🤖 واتساب AI نشط</span></h1>
+        <p>فرز المعتمرين الذكي وإدارة الحجوزات اللحظية 24/7</p>
+      </div>
+    </div>
+
+    <div class="header-nav">
+      <!-- Official Phone Badge -->
+      <div class="wa-number-badge">
+        <span>📱 واتساب رِفقة:</span>
+        <strong style="color: #fff; direction: ltr; font-family: monospace;">01554463293</strong>
+      </div>
+
+      <!-- WhatsApp Live Status Pill / QR Modal -->
+      <button onclick="openModal('waQrModal')" class="btn-action" id="waStatusPill" style="background: rgba(37,211,102,0.18); border-color: #25d366; color: #86efac; font-weight:800;">
+        <span class="pulse-dot" id="waPulseDot" style="background:#25d366;"></span>
+        <span id="waStatusLabel">📱 فحص الواتساب...</span>
+      </button>
+
+      <!-- Supabase Status Pill -->
+      <div class="supabase-status-pill" id="supabaseStatusPill" onclick="openModal('supabaseSqlModal')" title="حالة الاتصال بسحابة Supabase">
+        <span class="pulse-dot"></span>
+        <span id="supabaseStatusLabel">🔄 فحص سبباس...</span>
+      </div>
+
+      <!-- Views Buttons -->
+      <button class="view-btn active" id="btnViewInbox" onclick="switchMainView('inbox')">
+        <span>💬 المحادثات</span>
+      </button>
+
+      <button class="view-btn" id="btnViewKanban" onclick="switchMainView('kanban')">
+        <span>📋 الحجوزات (Kanban)</span>
+      </button>
+
+      <!-- Bot AI Toggle -->
+      <button class="btn-action" id="btnAiToggle" onclick="toggleAiEngine()" style="background:#064e3b; border-color:#059669; color:#86efac;">
+        <span>🟢 المجيب الآلي: شغال</span>
+      </button>
+
+      <!-- Server Settings -->
+      <button onclick="openModal('settingsModal')" class="btn-action" title="إعدادات رابط سيرفر البوت (محلي أو Render)">
+        <span>⚙️ السيرفر</span>
+      </button>
+
+      <!-- Add New Lead Button -->
+      <button onclick="openModal('customerModal')" class="btn-action" style="background:var(--gold); border-color:var(--gold); color:var(--primary-dark); font-weight:800;">
+        <span>➕ عميل جديد</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Container -->
+  <div class="crm-workspace">
+
+    <!-- VIEW 1: WHATSAPP CHAT INBOX -->
+    <div class="wa-view-container" id="inboxView">
+
+      <!-- Left Chats Sidebar -->
+      <aside class="wa-chats-sidebar">
+        <div class="chats-search-bar">
+          <div class="search-input-wrapper">
+            <span>🔍</span>
+            <input type="text" id="chatSearchInput" placeholder="بحث بالاسم أو الهاتف..." onkeyup="filterChatsList()">
+          </div>
+          <div class="inbox-filter-pills">
+            <button class="filter-pill active" onclick="filterChatsByPill('all', this)">الكل (<span id="cnt-all">0</span>)</button>
+            <button class="filter-pill" onclick="filterChatsByPill('needs_human', this)">يحتاج موظف 🔔 (<span id="cnt-human">0</span>)</button>
+            <button class="filter-pill" onclick="filterChatsByPill('bot', this)">فرز آلي 🤖 (<span id="cnt-bot">0</span>)</button>
+            <button class="filter-pill" onclick="filterChatsByPill('deposit_paid', this)">تم التعاقد 🪪 (<span id="cnt-deposit">0</span>)</button>
+          </div>
+        </div>
+
+        <div class="chats-list" id="chatsListContainer">
+          <!-- Populated dynamically -->
+        </div>
+      </aside>
+
+      <!-- Center Chat Window -->
+      <section class="wa-chat-window">
+        <!-- Chat Header -->
+        <div class="chat-window-header" id="chatWindowHeader" style="display:none;">
+          <div class="chat-header-profile">
+            <div class="chat-item-avatar" id="activeAvatar">م</div>
+            <div>
+              <div style="font-weight:800; font-size:0.95rem;" id="activeContactName">معتمر</div>
+              <div style="font-size:0.75rem; color:#64748b;" id="activeContactPhone">01554463293</div>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button onclick="takeoverByHuman()" class="btn-action" style="background:#dc2626; border-color:#dc2626; color:#fff;">
+              <span>👤 تدخل الموظف الآن</span>
+            </button>
+            <button onclick="sendQuickPdfOffer()" class="btn-action" style="background:#fff; border-color:#cbd5e1; color:#334155;">
+              <span>📄 إرسال ملف العرض PDF</span>
+            </button>
+            <a id="btnOpenRealWa" href="#" target="_blank" class="btn-action" style="background:#25d366; border-color:#25d366; color:#075e54; font-weight:800;">
+              <span>📱 فتح بالواتساب الحقيقي</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Chat Feed -->
+        <div class="chat-messages-feed" id="chatMessagesFeed">
+          <div style="text-align:center; padding:40px; color:#64748b;">
+            <div style="font-size:3rem; margin-bottom:10px;">🕋</div>
+            <h3>اختر محادثة من القائمة لعرض تفاصيلها</h3>
+            <p style="font-size:0.85rem; margin-top:6px;">أي رسالة تصل لواتساب رقم <strong>01554463293</strong> ستظهر هنا فوراً!</p>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-bar" id="chatInputBar" style="display:none;">
+          <button onclick="openQuickScriptsMenu()" class="btn-action" style="background:#fff; border-color:#cbd5e1; color:#334155;">⚡ سكريبت</button>
+          <input type="text" id="chatInputText" class="chat-input-box" placeholder="اكتب رداً للمعتمر... (إرسال سيرسل الرسالة لواتساب المعتمر مباشرة)" onkeypress="if(event.key==='Enter') sendAgentMessage()">
+          <button onclick="sendAgentMessage()" class="btn-send">➤</button>
+        </div>
+      </section>
+
+      <!-- Right Lead Inspector -->
+      <aside class="lead-inspector-pane" id="leadInspectorPane" style="display:none;">
+        <div style="text-align:center; padding:10px 0; border-bottom:1px solid #e2e8f0;">
+          <div class="chat-item-avatar" style="width:56px; height:56px; margin:0 auto 8px auto; font-size:1.4rem;" id="inspAvatar">م</div>
+          <h3 id="inspName" style="font-size:1rem; font-weight:800;">اسم المعتمر</h3>
+          <p id="inspPhone" style="font-size:0.8rem; color:#64748b; font-family:monospace; direction:ltr;">01554463293</p>
+        </div>
+
+        <div class="inspector-card">
+          <div class="inspector-title">🕋 البرنامج المناسب والمرشح:</div>
+          <div class="inspector-val" id="inspProgram" style="color:var(--wa-teal);">جاري التحديد...</div>
+        </div>
+
+        <div class="inspector-card">
+          <div class="inspector-title">👥 الأفراد والمرافقين:</div>
+          <div class="inspector-val" id="inspCompanions">2 أفراد</div>
+        </div>
+
+        <div class="inspector-card">
+          <div class="inspector-title">🎯 الأولوية التي اختارها:</div>
+          <div class="inspector-val" id="inspPriority" style="font-size:0.82rem;">قريب المشي 3 نجوم</div>
+        </div>
+
+        <div class="inspector-card">
+          <div class="inspector-title">💰 صافي عمولة رفقة المتوقعة:</div>
+          <div class="inspector-val" id="inspCommission" style="color:#059669; font-size:1.1rem;">9,000 ج.م</div>
+        </div>
+
+        <div class="inspector-card">
+          <div class="inspector-title">📋 حالة الحجز في الـ CRM:</div>
+          <select id="inspStageSelect" onchange="updateActiveLeadStage(this.value)" style="width:100%; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-family:inherit; font-weight:700; margin-top:4px;">
+            <option value="new_lead">معتمر جديد</option>
+            <option value="qualified">تم الفرز بنجاح</option>
+            <option value="needs_human">يحتاج تدخل موظف</option>
+            <option value="proposal_sent">تم إرسال العرض</option>
+            <option value="deposit_paid">تم التعاقد / الجوازات</option>
+            <option value="completed">اكتمل الحجز بنجاح</option>
+          </select>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- VIEW 2: KANBAN BOARD -->
+    <div class="kanban-view-container" id="kanbanView">
+      <div class="kanban-col"><div class="kanban-col-header"><span>معتمر جديد</span><span id="k-count-new_lead">0</span></div><div class="kanban-col-cards" id="k-list-new_lead"></div></div>
+      <div class="kanban-col"><div class="kanban-col-header"><span>تم الفرز الآلي</span><span id="k-count-qualified">0</span></div><div class="kanban-col-cards" id="k-list-qualified"></div></div>
+      <div class="kanban-col"><div class="kanban-col-header"><span>يحتاج تدخل موظف 🔔</span><span id="k-count-needs_human">0</span></div><div class="kanban-col-cards" id="k-list-needs_human"></div></div>
+      <div class="kanban-col"><div class="kanban-col-header"><span>تم إرسال العرض 📄</span><span id="k-count-proposal_sent">0</span></div><div class="kanban-col-cards" id="k-list-proposal_sent"></div></div>
+      <div class="kanban-col"><div class="kanban-col-header"><span>تم التعاقد والجوازات 🪪</span><span id="k-count-deposit_paid">0</span></div><div class="kanban-col-cards" id="k-list-deposit_paid"></div></div>
+      <div class="kanban-col"><div class="kanban-col-header"><span>اكتمل الحجز ✅</span><span id="k-count-completed">0</span></div><div class="kanban-col-cards" id="k-list-completed"></div></div>
+    </div>
+
+  </div>
+
+  <!-- Modal 1: WhatsApp QR Code Connection Modal -->
+  <div class="modal-overlay" id="waQrModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>📱 ربط رقم واتساب رِفقة:</span>
+          <span style="color:var(--gold); font-family:monospace; direction:ltr;">01554463293</span>
+        </h3>
+        <button onclick="closeModal('waQrModal')" style="background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        
+        <div id="waStatusBanner" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#1e40af;">
+          <strong>🎯 الربط الفوري:</strong> امسح الباركود بكاميرا واتساب على هاتفك لتشغيل الرد الآلي والمزامنة اللحظية مع CRM.
+        </div>
+
+        <!-- QR Code Container -->
+        <div id="waQrState" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:15px; background:#f8fafc; border-radius:12px; border:2px dashed #25d366;">
+          <div id="waQrLoading" style="padding:25px;">
+            <div style="font-size:2.2rem; animation:pulse 1.2s infinite;">⏳</div>
+            <p style="font-size:0.85rem; color:#64748b; margin-top:8px; font-weight:700;">جاري تحديث رمز الباركود...</p>
+          </div>
+          <img id="waQrImg" src="" style="width:260px; height:260px; border-radius:8px; background:#fff; padding:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); display:none;" alt="رمز الباركود">
+          <p id="waQrHint" style="display:none; margin-top:10px; font-size:0.82rem; color:#123d42; font-weight:700;">
+            📷 وجّه كاميرا واتساب (الأجهزة المرتبطة) نحو هذا الرمز
+          </p>
+        </div>
+
+        <!-- Connected State -->
+        <div id="waConnectedState" style="display:none; text-align:center; padding:25px 15px; background:#f0fdf4; border-radius:12px; border:2px solid #22c55e;">
+          <div style="font-size:3rem; margin-bottom:8px;">✅</div>
+          <h3 style="color:#15803d; font-size:1.15rem; font-weight:800; margin-bottom:6px;">تم ربط واتساب رِفقة بنجاح!</h3>
+          <p style="color:#166534; font-size:0.88rem;">الرقم النشط: <strong id="waConnectedNum" style="font-family:monospace; direction:ltr; display:inline-block;">01554463293</strong></p>
+          <div style="margin-top:12px; padding:10px 14px; background:#dcfce7; border-radius:8px; font-size:0.82rem; color:#14532d; line-height:1.6;">
+            🟢 محرك الفرز الذكي لـ «رِفقة» نشط ومربوط بـ Supabase 24/7.<br>
+            أي معتمر يرسل استفساراً سيتم تشخيصه وتحديد برنامجه وعمولته فوراً في هذا الجدول!
+          </div>
+        </div>
+
+        <!-- Offline State -->
+        <div id="waOfflineState" style="display:none; text-align:center; padding:20px; background:#fef2f2; border-radius:12px; border:1px solid #fecaca;">
+          <div style="font-size:2rem; margin-bottom:8px;">⚠️</div>
+          <h4 style="color:#991b1b; font-weight:800;">محرك الواتساب غير متصل</h4>
+          <p style="color:#7f1d1d; font-size:0.82rem; margin-top:6px;">
+            لو بتشغل محلياً: اضغط دبل كليك على <strong>start.bat</strong>.<br>
+            لو رافع على Render: تأكد من رابط السيرفر من زر <strong>⚙️ السيرفر</strong> بالأعلى.
+          </p>
+          <button onclick="pollWhatsAppStatus()" class="btn-action" style="margin-top:10px; background:#ef4444; color:#fff; border:none; padding:5px 14px; border-radius:6px; font-size:0.78rem;">🔄 إعادة الفحص</button>
+        </div>
+
+        <!-- Guide -->
+        <div style="text-align:right; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#475569; line-height:1.6;">
+          <strong>📌 خطوات الربط من هاتفك:</strong><br>
+          1. افتح تطبيق واتساب على هاتفك (01554463293).<br>
+          2. اضغط على القائمة (⠇) واختر <strong>الأجهزة المرتبطة (Linked Devices)</strong>.<br>
+          3. اضغط <strong>ربط جهاز</strong> ووجّه الكاميرا نحو الباركود أعلاه.
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('waQrModal')" class="btn-action">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Server Config Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 style="font-size:1rem; font-weight:800;">⚙️ إعدادات رابط سيرفر واتساب</h3>
+        <button onclick="closeModal('settingsModal')" style="background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.82rem; color:#475569; line-height:1.6;">
+          يمكنك تحديد رابط السيرفر الذي يعمل عليه محرك واتساب:
+        </p>
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+          <label style="font-size:0.78rem; font-weight:700;">رابط السيرفر (URL):</label>
+          <input type="text" id="settingServerUrl" class="chat-input-box" style="direction:ltr; font-family:monospace; font-size:0.82rem;" placeholder="http://localhost:3005 أو https://rifqa-whatsapp-bot.onrender.com">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button onclick="document.getElementById('settingServerUrl').value='http://localhost:3005'" class="btn-action" style="background:#f1f5f9; color:#334155; border-color:#cbd5e1; font-size:0.74rem;">افتراضي محلي (Localhost)</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="saveServerSetting()" class="btn-action" style="background:var(--gold); color:var(--primary-dark); font-weight:800;">حفظ الرابط</button>
+        <button onclick="closeModal('settingsModal')" class="btn-action">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Manual Lead Modal -->
+  <div class="modal-overlay" id="customerModal">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 style="font-size:1rem; font-weight:800;">➕ إضافة معتمر جديد يدوياً</h3>
+        <button onclick="closeModal('customerModal')" style="background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div><label style="font-size:0.78rem; font-weight:700;">اسم المعتمر:</label><input type="text" id="newCustName" class="chat-input-box" style="width:100%; margin-top:4px;" placeholder="أ/ أحمد إبراهيم"></div>
+          <div><label style="font-size:0.78rem; font-weight:700;">رقم الهاتف (واتساب):</label><input type="text" id="newCustPhone" class="chat-input-box" style="width:100%; margin-top:4px; direction:ltr;" placeholder="01012345678"></div>
+          <div><label style="font-size:0.78rem; font-weight:700;">البرنامج المطلوب:</label>
+            <select id="newCustProgram" style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; font-family:inherit; margin-top:4px;">
+              <option value="الاقتصادي المميز (قريب المشي 3 نجوم)">الاقتصادي المميز (قريب المشي 3 نجوم) - 42,000 ج.م</option>
+              <option value="البرنامج الاقتصادي (14 يوم)">البرنامج الاقتصادي (14 يوم شاتل) - 35,500 ج.م</option>
+              <option value="البرنامج المميز (4 نجوم راقي)">البرنامج المميز (4 نجوم راقي) - 54,500 ج.م</option>
+              <option value="برنامج الـ 5 نجوم والـ VIP">برنامج الـ 5 نجوم والـ VIP - 85,000 ج.م</option>
+            </select>
+          </div>
+          <div><label style="font-size:0.78rem; font-weight:700;">عدد الأفراد:</label><input type="number" id="newCustPax" class="chat-input-box" value="2" min="1" style="width:100%; margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="saveNewCustomerManual()" class="btn-action" style="background:var(--gold); color:var(--primary-dark); font-weight:800;">إضافة ومزامنة</button>
+        <button onclick="closeModal('customerModal')" class="btn-action">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Application Logic -->
+  <script>
+    const SUPABASE_URL = 'https://nifwgokownhyyksgcykk.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZndnb2tvd25oeXlrc2djeWtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxMDEwNzAsImV4cCI6MjEwNzY3NzA3MH0.9IY6lY4uU85LvkdYZI0RyChH_UIWXGMSvtmS3Ks1cj0';
+
+    let WA_SERVICE_URL = localStorage.getItem('rifqa_wa_service_url') || 'http://localhost:3005';
+    let supabaseClient = null;
+
+    let crmData = {
+      aiActive: true,
+      activeChatId: null,
+      chats: []
+    };
+
+    function initCrm() {
+      // 1. Load config
+      document.getElementById('settingServerUrl').value = WA_SERVICE_URL;
+
+      // 2. Load cached chats
+      const saved = localStorage.getItem('rifqa_crm_store');
+      if (saved) {
+        try { crmData = JSON.parse(saved); } catch(e){}
+      }
+
+      // 3. Init Supabase Realtime
+      initSupabase();
+
+      // 4. Initial Render
+      renderChatsSidebar();
+      renderActiveChat();
+      renderKanbanBoard();
+      updateFilterCounts();
+
+      // 5. Start Polling WhatsApp Engine
+      pollWhatsAppStatus();
+      setInterval(pollWhatsAppStatus, 2500);
+    }
+
+    function saveStore() {
+      localStorage.setItem('rifqa_crm_store', JSON.stringify(crmData));
+      updateFilterCounts();
+    }
+
+    function saveServerSetting() {
+      const url = document.getElementById('settingServerUrl').value.trim().replace(/\/+$/, '');
+      if (url) {
+        WA_SERVICE_URL = url;
+        localStorage.setItem('rifqa_wa_service_url', WA_SERVICE_URL);
+        closeModal('settingsModal');
+        showToast('تم حفظ رابط السيرفر بنجاح');
+        pollWhatsAppStatus();
+      }
+    }
+
+    // ==========================================
+    // Supabase Realtime Integration
+    // ==========================================
+    function initSupabase() {
+      if (!window.supabase) return;
+      try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        updateSupabasePill('connected', '🟢 سبباس متصل 24/7');
+        fetchSupabaseLeads();
+        setupSupabaseRealtime();
+      } catch(e) {
+        updateSupabasePill('warning', '⚠️ وضع محلي');
+      }
+    }
+
+    function updateSupabasePill(status, text) {
+      const pill = document.getElementById('supabaseStatusPill');
+      const label = document.getElementById('supabaseStatusLabel');
+      if (label) label.textContent = text;
+      if (pill) {
+        if (status === 'connected') {
+          pill.style.background = 'rgba(16, 185, 129, 0.15)';
+          pill.style.borderColor = '#10b981';
+          pill.style.color = '#86efac';
+        }
+      }
+    }
+
+    async function fetchSupabaseLeads() {
+      if (!supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('leads')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          crmData.chats = data.map(mapSupabaseToChat);
+          if (!crmData.activeChatId && crmData.chats.length > 0) {
+            crmData.activeChatId = crmData.chats[0].id;
+          }
+          saveStore();
+          renderChatsSidebar();
+          renderActiveChat();
+          renderKanbanBoard();
+        }
+      } catch(e){}
+    }
+
+    function setupSupabaseRealtime() {
+      if (!supabaseClient) return;
+      try {
+        supabaseClient
+          .channel('realtime_leads_channel')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const newChat = mapSupabaseToChat(payload.new);
+              if (!crmData.chats.some(c => c.id === newChat.id)) {
+                crmData.chats.unshift(newChat);
+                if (!crmData.activeChatId) crmData.activeChatId = newChat.id;
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              const updatedChat = mapSupabaseToChat(payload.new);
+              const idx = crmData.chats.findIndex(c => c.id === updatedChat.id);
+              if (idx !== -1) crmData.chats[idx] = updatedChat;
+              else crmData.chats.unshift(updatedChat);
+            }
+            saveStore();
+            renderChatsSidebar();
+            renderActiveChat();
+            renderKanbanBoard();
+            showToast('⚡ تحديث لحظي من سبباس!');
+          })
+          .subscribe();
+      } catch(e){}
+    }
+
+    function mapSupabaseToChat(row) {
+      return {
+        id: row.id,
+        name: row.name || 'معتمر جديد',
+        phone: row.phone,
+        stage: row.stage || 'new_lead',
+        handledBy: row.handled_by || 'bot',
+        pax: row.pax || 2,
+        companions: row.companions || '',
+        priority: row.priority || '',
+        month: row.month || 'شهر ديسمبر 2026',
+        recommendedProgram: row.recommended_program || 'جاري الفرز...',
+        commission: Number(row.commission) || 0,
+        lastActivity: row.last_activity || 'الآن',
+        messages: Array.isArray(row.messages) ? row.messages : []
+      };
+    }
+
+    async function syncLeadToSupabase(chat) {
+      if (!supabaseClient) return;
+      try {
+        await supabaseClient.from('leads').upsert({
+          id: chat.id,
+          name: chat.name,
+          phone: chat.phone,
+          stage: chat.stage,
+          handled_by: chat.handledBy,
+          pax: chat.pax,
+          companions: chat.companions,
+          priority: chat.priority,
+          month: chat.month,
+          recommended_program: chat.recommendedProgram,
+          commission: chat.commission,
+          last_activity: chat.lastActivity,
+          messages: chat.messages
+        });
+      } catch(e){}
+    }
+
+    // ==========================================
+    // WhatsApp Engine Bridge & Polling
+    // ==========================================
+    async function pollWhatsAppStatus() {
+      const pill = document.getElementById('waStatusPill');
+      const dot = document.getElementById('waPulseDot');
+      const label = document.getElementById('waStatusLabel');
+      
+      const qrState = document.getElementById('waQrState');
+      const qrImg = document.getElementById('waQrImg');
+      const qrLoading = document.getElementById('waQrLoading');
+      const qrHint = document.getElementById('waQrHint');
+      const connectedState = document.getElementById('waConnectedState');
+      const connectedNum = document.getElementById('waConnectedNum');
+      const offlineState = document.getElementById('waOfflineState');
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2500);
+        const res = await fetch(`${WA_SERVICE_URL}/status`, { signal: controller.signal });
+        clearTimeout(timeout);
+
+        if (!res.ok) throw new Error('status error');
+        const data = await res.json();
+
+        if (data.status === 'connected') {
+          if (pill) {
+            pill.style.background = 'rgba(37,211,102,0.18)';
+            pill.style.borderColor = '#25d366';
+            pill.style.color = '#86efac';
+          }
+          if (dot) dot.style.background = '#25d366';
+          if (label) label.textContent = '🟢 واتساب: متصل (' + (data.phone ? data.phone.slice(-4) : '293') + ')';
+
+          if (qrState) qrState.style.display = 'none';
+          if (offlineState) offlineState.style.display = 'none';
+          if (connectedState) {
+            connectedState.style.display = 'block';
+            if (connectedNum && data.phone) connectedNum.textContent = data.phone;
+          }
+        } else if (data.status === 'scan_qr' && data.qr) {
+          if (pill) {
+            pill.style.background = 'rgba(245,158,11,0.2)';
+            pill.style.borderColor = '#f59e0b';
+            pill.style.color = '#fde68a';
+          }
+          if (dot) dot.style.background = '#f59e0b';
+          if (label) label.textContent = '🟡 امسح الباركود (QR)';
+
+          if (connectedState) connectedState.style.display = 'none';
+          if (offlineState) offlineState.style.display = 'none';
+          if (qrState) qrState.style.display = 'flex';
+          if (qrLoading) qrLoading.style.display = 'none';
+          if (qrImg) { qrImg.src = data.qr; qrImg.style.display = 'block'; }
+          if (qrHint) qrHint.style.display = 'block';
+        } else {
+          if (pill) {
+            pill.style.background = 'rgba(59,130,246,0.15)';
+            pill.style.borderColor = '#3b82f6';
+            pill.style.color = '#93c5fd';
+          }
+          if (dot) dot.style.background = '#3b82f6';
+          if (label) label.textContent = '🔵 جاري تهيئة واتساب...';
+
+          if (connectedState) connectedState.style.display = 'none';
+          if (offlineState) offlineState.style.display = 'none';
+          if (qrState) qrState.style.display = 'flex';
+          if (qrImg) qrImg.style.display = 'none';
+          if (qrLoading) qrLoading.style.display = 'block';
+          if (qrHint) qrHint.style.display = 'none';
+        }
+      } catch(e) {
+        if (pill) {
+          pill.style.background = 'rgba(100,116,139,0.15)';
+          pill.style.borderColor = '#64748b';
+          pill.style.color = '#cbd5e1';
+        }
+        if (dot) dot.style.background = '#64748b';
+        if (label) label.textContent = '⚪ تشغيل start.bat للربط';
+
+        if (qrState) qrState.style.display = 'none';
+        if (connectedState) connectedState.style.display = 'none';
+        if (offlineState) offlineState.style.display = 'block';
+      }
+    }
+
+    // ==========================================
+    // Messaging & Chat View
+    // ==========================================
+    function renderChatsSidebar() {
+      const container = document.getElementById('chatsListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (crmData.chats.length === 0) {
+        container.innerHTML = '<div style="padding:24px; text-align:center; color:#64748b; font-size:0.82rem;">لا توجد محادثات حتى الآن.<br>أي عميل يرسل رسالة سيظهر هنا تلقائياً!</div>';
+        return;
+      }
+
+      crmData.chats.forEach(chat => {
+        const item = document.createElement('div');
+        item.className = `chat-item ${chat.id === crmData.activeChatId ? 'active' : ''}`;
+        item.onclick = () => {
+          crmData.activeChatId = chat.id;
+          renderChatsSidebar();
+          renderActiveChat();
+        };
+
+        const lastMsg = chat.messages && chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].text : 'استفسار جديد';
+
+        item.innerHTML = `
+          <div class="chat-item-avatar">${chat.name ? chat.name[0] : 'م'}</div>
+          <div class="chat-item-info">
+            <div class="chat-item-top">
+              <span class="chat-contact-name">${chat.name}</span>
+              <span class="chat-time">${chat.lastActivity || 'الآن'}</span>
+            </div>
+            <div class="chat-item-snippet">${lastMsg}</div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderActiveChat() {
+      const chat = crmData.chats.find(c => c.id === crmData.activeChatId);
+      const header = document.getElementById('chatWindowHeader');
+      const inputBar = document.getElementById('chatInputBar');
+      const inspector = document.getElementById('leadInspectorPane');
+      const feed = document.getElementById('chatMessagesFeed');
+
+      if (!chat) {
+        if (header) header.style.display = 'none';
+        if (inputBar) inputBar.style.display = 'none';
+        if (inspector) inspector.style.display = 'none';
+        if (feed) feed.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b;"><div style="font-size:3rem; margin-bottom:10px;">🕋</div><h3>اختر محادثة من القائمة لعرض تفاصيلها</h3></div>';
+        return;
+      }
+
+      if (header) header.style.display = 'flex';
+      if (inputBar) inputBar.style.display = 'flex';
+      if (inspector) inspector.style.display = 'flex';
+
+      document.getElementById('activeContactName').textContent = chat.name;
+      document.getElementById('activeContactPhone').textContent = chat.phone;
+      document.getElementById('activeAvatar').textContent = chat.name ? chat.name[0] : 'م';
+
+      const cleanPhone = chat.phone.replace(/[^0-9]/g, '');
+      const waLink = cleanPhone.startsWith('0') ? '2' + cleanPhone : cleanPhone;
+      document.getElementById('btnOpenRealWa').href = `https://wa.me/${waLink}`;
+
+      // Feed
+      feed.innerHTML = '';
+      (chat.messages || []).forEach(m => {
+        const row = document.createElement('div');
+        row.className = `message-row ${m.sender === 'customer' ? 'incoming' : 'outgoing'}`;
+        row.innerHTML = `
+          <div class="message-bubble">
+            ${m.text}
+            <div class="message-meta">
+              <span>${m.time || 'الآن'}</span>
+              ${m.sender !== 'customer' ? '<span>✓✓</span>' : ''}
+            </div>
+          </div>
+        `;
+        feed.appendChild(row);
+      });
+      feed.scrollTop = feed.scrollHeight;
+
+      // Inspector
+      document.getElementById('inspAvatar').textContent = chat.name ? chat.name[0] : 'م';
+      document.getElementById('inspName').textContent = chat.name;
+      document.getElementById('inspPhone').textContent = chat.phone;
+      document.getElementById('inspProgram').textContent = chat.recommendedProgram || 'جاري الفرز...';
+      document.getElementById('inspCompanions').textContent = chat.companions || `${chat.pax || 2} أفراد`;
+      document.getElementById('inspPriority').textContent = chat.priority || 'تحديد تلقائي';
+      document.getElementById('inspCommission').textContent = (chat.commission || 0).toLocaleString('ar-EG') + ' ج.م';
+      document.getElementById('inspStageSelect').value = chat.stage || 'new_lead';
+    }
+
+    function sendAgentMessage() {
+      const input = document.getElementById('chatInputText');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chat = crmData.chats.find(c => c.id === crmData.activeChatId);
+      if (!chat) return;
+
+      const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      chat.handledBy = 'agent';
+      if (chat.stage === 'needs_human') chat.stage = 'proposal_sent';
+
+      chat.messages.push({
+        id: Date.now(),
+        sender: 'agent',
+        text: text,
+        time: now
+      });
+
+      input.value = '';
+      saveStore();
+      syncLeadToSupabase(chat);
+      renderActiveChat();
+      renderChatsSidebar();
+
+      // Dispatch to WhatsApp Baileys service
+      if (chat.phone) {
+        fetch(`${WA_SERVICE_URL}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: chat.phone, text: text })
+        }).then(r => r.json()).then(res => {
+          if (res.success) showToast('تم إرسال الرسالة إلى واتساب المعتمر بنجاح ✅');
+        }).catch(err => {});
+      }
+    }
+
+    function takeoverByHuman() {
+      const chat = crmData.chats.find(c => c.id === crmData.activeChatId);
+      if (!chat) return;
+      chat.handledBy = 'agent';
+      chat.stage = 'needs_human';
+      saveStore();
+      syncLeadToSupabase(chat);
+      renderActiveChat();
+      renderChatsSidebar();
+      showToast('تم تحويل المحادثة للتدخل البشري 👤');
+    }
+
+    function sendQuickPdfOffer() {
+      const chat = crmData.chats.find(c => c.id === crmData.activeChatId);
+      if (!chat) return;
+      const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      const offerMsg = `📄 مرفق لحضرتك ملف العرض التفصيلي لبرنامج [${chat.recommendedProgram || 'العمرة'}] مع «رِفقة»:
+يشمل خطة الفنادق ومسافة الحرم ومواعيد الطيران والأسعار.
+
+لتثبيت السعر وحجز المقاعد، تفضل بإرسال صور الجوازات هنا للمتابعة فوراً 🪪`;
+      
+      chat.messages.push({
+        id: Date.now(),
+        sender: 'agent',
+        text: offerMsg,
+        time: now
+      });
+      chat.stage = 'proposal_sent';
+      saveStore();
+      syncLeadToSupabase(chat);
+      renderActiveChat();
+      renderChatsSidebar();
+      showToast('تم إرسال ملف العرض للمعتمر بنجاح');
+
+      if (chat.phone) {
+        fetch(`${WA_SERVICE_URL}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: chat.phone, text: offerMsg })
+        }).catch(e => {});
+      }
+    }
+
+    function openQuickScriptsMenu() {
+      const scripts = [
+        'أهلاً بحضرتك يا فندم في رِفقة، إحنا تحت أمرك في أي استفسار بخصوص العمرة المباركة ✨',
+        'نصيحة لحضرتك: فندق المشي القريب أوفر بكثير في الراحة لوالديك بدون أي انتظار لباصات 🚶‍♂️',
+        'طيران الرحلة مقاعده بتتقفل بسرعة جداً، تحب أحجز لك المقاعد دلوقتي قبل زيادة التذاكر؟ ✈️',
+        'تم تجهيز التأشيرات لحضرتكم بحمد الله ومبارك مقدماً زيارة الحبيب المصطفى 🕋'
+      ];
+      const pick = prompt("اختر رقم السكربت لإرساله فوراً:\n1. رسالة ترحيبية\n2. نصيحة كبار السن\n3. استعجال وحسم الحجز\n4. صدور التأشيرات", "1");
+      if (pick && scripts[parseInt(pick)-1]) {
+        document.getElementById('chatInputText').value = scripts[parseInt(pick)-1];
+        sendAgentMessage();
+      }
+    }
+
+    function updateActiveLeadStage(stage) {
+      const chat = crmData.chats.find(c => c.id === crmData.activeChatId);
+      if (!chat) return;
+      chat.stage = stage;
+      saveStore();
+      syncLeadToSupabase(chat);
+      renderChatsSidebar();
+      renderKanbanBoard();
+      showToast('تم تحديث حالة الحجز');
+    }
+
+    function toggleAiEngine() {
+      crmData.aiActive = !crmData.aiActive;
+      const btn = document.getElementById('btnAiToggle');
+      if (crmData.aiActive) {
+        btn.innerHTML = '<span>🟢 المجيب الآلي: شغال</span>';
+        btn.style.background = '#064e3b';
+        showToast('تم تفعيل المجيب الآلي الذكي (AI)');
+      } else {
+        btn.innerHTML = '<span>🔴 المجيب الآلي: معطل</span>';
+        btn.style.background = '#7f1d1d';
+        showToast('تم تعطيل المجيب الآلي - التدخل البشري فقط');
+      }
+      saveStore();
+      fetch(`${WA_SERVICE_URL}/toggle-bot`, { method: 'POST' }).catch(e => {});
+    }
+
+    // ==========================================
+    // Kanban Board
+    // ==========================================
+    const KANBAN_STAGES = ['new_lead', 'qualified', 'needs_human', 'proposal_sent', 'deposit_paid', 'completed'];
+
+    function renderKanbanBoard() {
+      KANBAN_STAGES.forEach(stage => {
+        const list = document.getElementById(`k-list-${stage}`);
+        const count = document.getElementById(`k-count-${stage}`);
+        if (!list) return;
+        list.innerHTML = '';
+
+        const stageChats = crmData.chats.filter(c => c.stage === stage);
+        if (count) count.textContent = stageChats.length;
+
+        stageChats.forEach(chat => {
+          const card = document.createElement('div');
+          card.className = 'kanban-card';
+          card.onclick = () => {
+            crmData.activeChatId = chat.id;
+            switchMainView('inbox');
+          };
+          card.innerHTML = `
+            <div style="font-weight:800; font-size:0.86rem; color:var(--primary-dark);">${chat.name}</div>
+            <div style="font-size:0.75rem; color:var(--wa-teal); font-weight:700; margin:2px 0;">${chat.recommendedProgram || 'قيد الفرز'}</div>
+            <div style="font-size:0.72rem; color:#64748b;">📞 ${chat.phone}</div>
+            <div style="font-size:0.72rem; color:#059669; font-weight:800; margin-top:4px;">ربح: ${(chat.commission||0).toLocaleString('ar-EG')} ج.م</div>
+          `;
+          list.appendChild(card);
+        });
+      });
+    }
+
+    function switchMainView(view) {
+      const inbox = document.getElementById('inboxView');
+      const kanban = document.getElementById('kanbanView');
+      const btnInbox = document.getElementById('btnViewInbox');
+      const btnKanban = document.getElementById('btnViewKanban');
+
+      if (view === 'inbox') {
+        inbox.style.display = 'flex';
+        kanban.style.display = 'none';
+        btnInbox.classList.add('active');
+        btnKanban.classList.remove('active');
+      } else {
+        inbox.style.display = 'none';
+        kanban.style.display = 'flex';
+        btnInbox.classList.remove('active');
+        btnKanban.classList.add('active');
+        renderKanbanBoard();
+      }
+    }
+
+    function updateFilterCounts() {
+      const cntAll = document.getElementById('cnt-all');
+      const cntHuman = document.getElementById('cnt-human');
+      const cntBot = document.getElementById('cnt-bot');
+      const cntDeposit = document.getElementById('cnt-deposit');
+
+      if (cntAll) cntAll.textContent = crmData.chats.length;
+      if (cntHuman) cntHuman.textContent = crmData.chats.filter(c => c.stage === 'needs_human').length;
+      if (cntBot) cntBot.textContent = crmData.chats.filter(c => c.handledBy === 'bot').length;
+      if (cntDeposit) cntDeposit.textContent = crmData.chats.filter(c => c.stage === 'deposit_paid').length;
+    }
+
+    function filterChatsByPill(type, btn) {
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const items = document.querySelectorAll('.chat-item');
+      crmData.chats.forEach((chat, idx) => {
+        const el = items[idx];
+        if (!el) return;
+        if (type === 'all') el.style.display = 'flex';
+        else if (type === 'needs_human') el.style.display = chat.stage === 'needs_human' ? 'flex' : 'none';
+        else if (type === 'bot') el.style.display = chat.handledBy === 'bot' ? 'flex' : 'none';
+        else if (type === 'deposit_paid') el.style.display = chat.stage === 'deposit_paid' ? 'flex' : 'none';
+      });
+    }
+
+    function filterChatsList() {
+      const q = document.getElementById('chatSearchInput').value.toLowerCase();
+      const items = document.querySelectorAll('.chat-item');
+      crmData.chats.forEach((chat, idx) => {
+        const el = items[idx];
+        if (!el) return;
+        const match = chat.name.toLowerCase().includes(q) || chat.phone.includes(q);
+        el.style.display = match ? 'flex' : 'none';
+      });
+    }
+
+    function saveNewCustomerManual() {
+      const name = document.getElementById('newCustName').value.trim();
+      const phone = document.getElementById('newCustPhone').value.trim();
+      const prog = document.getElementById('newCustProgram').value;
+      const pax = parseInt(document.getElementById('newCustPax').value) || 2;
+
+      if (!name || !phone) {
+        alert('يرجى إدخال اسم المعتمر ورقم الهاتف');
+        return;
+      }
+
+      const newId = 'lead_' + Date.now();
+      const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+      const newChat = {
+        id: newId,
+        name: name,
+        phone: phone,
+        stage: 'qualified',
+        handledBy: 'bot',
+        pax: pax,
+        companions: `${pax} أفراد`,
+        priority: 'محدد يدوياً',
+        month: 'شهر ديسمبر 2026',
+        recommendedProgram: prog,
+        commission: pax * 4500,
+        lastActivity: now,
+        messages: [
+          { id: 1, sender: 'customer', text: 'السلام عليكم ورحمة الله، استفسار عن رحلة العمرة', time: now },
+          { id: 2, sender: 'bot', text: `أهلاً بحضرتك يا فندم في «رِفقة».. تم تسجيل طلبك لـ [${prog}] وسيقوم مسؤول الحجوزات بمتابعة طلبكم فوراً.`, time: now }
+        ]
+      };
+
+      crmData.chats.unshift(newChat);
+      crmData.activeChatId = newId;
+      saveStore();
+      syncLeadToSupabase(newChat);
+      closeModal('customerModal');
+      renderChatsSidebar();
+      renderActiveChat();
+      showToast('تمت إضافة المعتمر بنجاح');
+    }
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    window.addEventListener('DOMContentLoaded', initCrm);
+  </script>
+</body>
+</html>
